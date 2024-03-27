@@ -4,7 +4,6 @@ app.use(express.json());
 const mongoose = require("mongoose");
 const cors = require("cors");
 app.use(cors());
-
 // _______________________________________
 // Ajout des headers pour éviter des erreurs
 app.use((req, res, next) => {

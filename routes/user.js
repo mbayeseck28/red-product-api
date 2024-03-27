@@ -1,19 +1,25 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const userCtrl = require('../controllers/user');
-const authMiddleware = require('../middleware/auth');
-const User = require('../models/user');
+const userCtrl = require("../controllers/user");
+const authMiddleware = require("../middleware/auth");
+const User = require("../models/user");
 
-router.post('/signup', userCtrl.signup);
-router.post('/login', userCtrl.login);
+router.post("/signup", userCtrl.signup);
+router.post("/login", userCtrl.login);
+
+// Route pour la demande de réinitialisation de mot de passe
+router.post("/forgot-password", userCtrl.forgotPassword);
+
+// Route pour la réinitialisation de mot de passe
+router.post("/reset-password", userCtrl.resetPassword);
 
 // route protégée nécessitant une authentification
-router.get('/profile', authMiddleware, (req, res) => {
+router.get("/profile", authMiddleware, (req, res) => {
   User.findById(req.auth.userId) // Recherche de l'utilisateur par son ID
     .then((user) => {
       if (!user) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return res.status(404).json({ error: "Utilisateur non trouvé" });
       }
       // Si l'utilisateur est trouvé, renvoyer toutes ses informations
       res.status(200).json(user);
@@ -25,7 +31,7 @@ router.get('/profile', authMiddleware, (req, res) => {
     });
 });
 
-router.put('/profile', authMiddleware, (req, res) => {
+router.put("/profile", authMiddleware, (req, res) => {
   // Récupérer les valeurs à mettre à jour à partir du corps de la requête
   let updateValues = { ...req.body };
 
@@ -37,13 +43,23 @@ router.put('/profile', authMiddleware, (req, res) => {
   User.findOneAndUpdate({ _id: req.auth.userId }, updateValues, { new: true })
     .then((user) => {
       if (!user) {
-        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
-      res.status(200).json({ message: 'Utilisateur modifié!', user });
+      res.status(200).json({ message: "Utilisateur modifié!", user });
     })
     .catch((error) => {
       res.status(400).json({ error });
     });
+});
+
+router.get("/profiles", (req, res, next) => {
+  User.find()
+    .then((user) => {
+      // Inverser la liste des categories
+      const reversedUser = user.reverse();
+      res.status(200).json(reversedUser);
+    })
+    .catch((error) => res.status(400).json({ error }));
 });
 
 module.exports = router;
