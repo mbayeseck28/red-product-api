@@ -59,20 +59,20 @@ function sendResetPasswordEmail(user, token) {
     service: "gmail",
     auth: {
       user: "test.mbayeseck@gmail.com",
-      pass: "Test##Test",
+      pass: "p r o z n v n x e a a g h u q x",
     },
   });
 
   // Contenu de l'e-mail
   const mailOptions = {
-    from: "test.mbayeseck@gmail.com", // Votre adresse e-mail Gmail
+    from: "test.mbayeseck@gmail.com",
     to: user.email, // Adresse e-mail de l'utilisateur
     subject: "Réinitialisation de mot de passe",
     text: `Bonjour ${user.prenom},
 
       Vous avez demandé une réinitialisation de mot de passe. Veuillez cliquer sur le lien ci-dessous pour réinitialiser votre mot de passe :
       
-      http://localhost:4000/api/auth/reset-password?token=${token}
+      http://localhost:3000/resetpassword/${token}
       
       Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.
 
@@ -110,11 +110,12 @@ exports.forgotPassword = (req, res, next) => {
     .catch((error) => res.status(500).json({ error }));
 };
 
-// Contrôleur pour la réinitialisation de mot de passe
-exports.resetPassword = (req, res, next) => {
-  const { token, newPassword } = req.body;
+// Contrôleur pour la soumission du formulaire de réinitialisation de mot de passe
+exports.resetPassword = (req, res) => {
+  const { token, password } = req.body;
   jwt.verify(token, "RESET_PASSWORD_SECRET", (err, decoded) => {
     if (err) {
+      console.error("Erreur de vérification du token :", err); // pour déboguer
       return res.status(401).json({ error: "Token invalide ou expiré." });
     }
     const userId = decoded.userId;
@@ -123,8 +124,9 @@ exports.resetPassword = (req, res, next) => {
         if (!user) {
           return res.status(404).json({ error: "Utilisateur non trouvé !" });
         }
-        bcrypt.hash(newPassword, 10, (err, hash) => {
+        bcrypt.hash(password, 10, (err, hash) => {
           if (err) {
+            console.error("Erreur lors du hachage du mot de passe :", err); // pour déboguer
             return res
               .status(500)
               .json({ error: "Erreur lors du hachage du mot de passe." });
@@ -137,9 +139,18 @@ exports.resetPassword = (req, res, next) => {
                 .status(200)
                 .json({ message: "Mot de passe réinitialisé avec succès." })
             )
-            .catch((error) => res.status(500).json({ error }));
+            .catch((error) => {
+              console.error(
+                "Erreur lors de l'enregistrement de l'utilisateur :",
+                error
+              ); // Ajout de cette ligne pour déboguer
+              res.status(500).json({ error });
+            });
         });
       })
-      .catch((error) => res.status(500).json({ error }));
+      .catch((error) => {
+        console.error("Erreur lors de la recherche de l'utilisateur :", error); // Ajout de cette ligne pour déboguer
+        res.status(500).json({ error });
+      });
   });
 };
